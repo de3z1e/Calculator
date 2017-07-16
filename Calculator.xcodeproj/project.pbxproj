@@ -13,6 +13,7 @@
 		205124EB1F0A0D0E00DA1C47 /* CalculatorBrain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205124E71F0A0D0E00DA1C47 /* CalculatorBrain.swift */; };
 		205124EC1F0A0D0E00DA1C47 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 205124E81F0A0D0E00DA1C47 /* Main.storyboard */; };
 		205124ED1F0A0D0E00DA1C47 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205124E91F0A0D0E00DA1C47 /* ViewController.swift */; };
+		20A80EAF1F1A9EAF005EEE36 /* Solver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A80EAE1F1A9EAF005EEE36 /* Solver.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +25,7 @@
 		205124E71F0A0D0E00DA1C47 /* CalculatorBrain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CalculatorBrain.swift; sourceTree = "<group>"; };
 		205124E81F0A0D0E00DA1C47 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		205124E91F0A0D0E00DA1C47 /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		20A80EAE1F1A9EAF005EEE36 /* Solver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Solver.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +60,7 @@
 			children = (
 				205124E81F0A0D0E00DA1C47 /* Main.storyboard */,
 				205124E71F0A0D0E00DA1C47 /* CalculatorBrain.swift */,
+				20A80EAE1F1A9EAF005EEE36 /* Solver.swift */,
 				205124E91F0A0D0E00DA1C47 /* ViewController.swift */,
 				20AC0F601F0A0F0200E977EF /* Supporting Files */,
 			);
@@ -151,6 +154,7 @@
 			files = (
 				205124ED1F0A0D0E00DA1C47 /* ViewController.swift in Sources */,
 				205124EB1F0A0D0E00DA1C47 /* CalculatorBrain.swift in Sources */,
+				20A80EAF1F1A9EAF005EEE36 /* Solver.swift in Sources */,
 				205124EA1F0A0D0E00DA1C47 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
