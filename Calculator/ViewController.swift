@@ -21,101 +21,33 @@ class ViewController: UIViewController {
             button.layer.borderWidth = 0.5
             button.layer.borderColor = UIColor.black.cgColor
         })
-//        let solver = Solver()
-//        let expression = "(1.7 + -2² × 3)² × -2sin(π²e) + 42 ÷ -tancos(-√(2 ÷ √√.5 - -.1) + 2)²²"
-//        let expression = "√√2²²"
-//        if let solution = solver.evaluate(expression) {
-//            print(solution)
-//        } else {
-//            print("nil")
-//        }
-        
-        
     }
     
-    
-    
-    var displayValue: Double {
-        get {
-            return Double(display.text!)!
-        }
-        set {
-            if newValue.remainder(dividingBy: 1) == 0 {
-                display.text = String(Int(newValue))
-            } else {
-                display.text = String(newValue)
-            }
-            
-        }
-    }
-    private var textCurrentlyInDisplay = String()
-    private var currentOperand = String()
-    private var pendingOperation = false
-    private var userIsInTheMiddleOfOperand = false
-    
-    private var solver = Solver()
+    private var brain = CalculatorBrain()
     
     @IBAction func touchDigit(_ sender: UIButton) {
-        let digit = sender.currentTitle!
-        if userIsInTheMiddleOfOperand {
-            currentOperand += (digit == "." && currentOperand.contains(".") ? "" : digit)
-            display.text! = textCurrentlyInDisplay + currentOperand
-        } else {
-            currentOperand = (digit == "." ? "0." : digit)
-            if display.text! == "0" {
-                display.text! = currentOperand
-            } else {
-                display.text! = textCurrentlyInDisplay + currentOperand
-            }
-            userIsInTheMiddleOfOperand = true
-            pendingOperation = false
+        if let operand = sender.currentTitle {
+            brain.setOperand(operand)
         }
-        print(currentOperand)
+        display.text = brain.currentOperand
     }
     
     @IBAction func performOperation(_ sender: UIButton) {
-        if let operation = operations[sender.currentTitle!] {
-            userIsInTheMiddleOfOperand = false
-            pendingOperation = true
-            switch operation {
-            case .unaryOperation(let function, _, _, _):
-                if sender.currentTitle == "±" {
-                    if let number = Double(currentOperand) {
-                        currentOperand = String(function(number))
-                    }
-                } else if pendingOperation {
-                    display.text = textCurrentlyInDisplay + operation.description
-                } else {
-                    
-                }
+        if let operation = sender.currentTitle {
+            if operation == "C" {
+                display.text = "0"
             }
-            
-            
-            if operation.type == .binaryOperation {
-                display.text?.append(" \(operation.description) ")
-            } else if sender.currentTitle == "±" {
-                
-            } else if display.text == "0" {
-                display.text = operation.description
-            } else {
-                display.text?.append(operation.description)
-            }
-            textCurrentlyInDisplay = display.text!
+            brain.performOperation(operation)
         }
-        
-//        if userIsInTheMiddleOfTyping {
-//            brain.setOperand(displayValue)
-//            userIsInTheMiddleOfTyping = false
-//        }
-//        if let mathematicalSymbol = sender.currentTitle {
-//            brain.performOperation(mathematicalSymbol)
-//        }
-//        if let result = brain.result {
-//            displayValue = result
-//        }
-//        operationSequence.text = brain.description
+        if brain.isPendingOperand {
+            display.text = brain.currentOperand
+        } else {
+            operationSequence.text = brain.accumulator
+        }
+        if let result = brain.result {
+            display.text = result
+        }
     }
-
 
 }
 

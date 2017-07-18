@@ -33,6 +33,8 @@ struct Operation {
 }
 
 var operations: Dictionary<String, Token> = [
+    "=" : Token.equals("="),
+    "C" : Token.clear("C"),
     "π" : Token.constant( (Double.pi, "π") ),
     "e" : Token.constant( (M_E, "e") ),
     "(" : Token.brace("("),
@@ -43,6 +45,7 @@ var operations: Dictionary<String, Token> = [
     "-" : Token.binaryOperation(Operation.subtraction),
     "±" : Token.unaryOperation(Operation.negate),
     "√" : Token.unaryOperation(Operation.squareRoot),
+    "²" : Token.unaryOperation(Operation.squared),
     "x²" : Token.unaryOperation(Operation.squared),
     "sin" : Token.unaryOperation(Operation.sinFunction),
     "cos" : Token.unaryOperation(Operation.cosFunction),
@@ -54,6 +57,8 @@ enum Type {
     case brace
     case binaryOperation
     case unaryOperation
+    case equals
+    case clear
 }
 
 enum Token {
@@ -61,6 +66,8 @@ enum Token {
     case brace(String)
     case binaryOperation(BinaryTuple)
     case unaryOperation(UnaryTuple)
+    case equals(String)
+    case clear(String)
     
     var description: String {
         switch self {
@@ -72,6 +79,10 @@ enum Token {
             return description
         case .unaryOperation(_, _, _, let description):
             return description
+        case .equals(let description):
+            return description
+        case .clear(let description):
+            return description
         }
     }
     
@@ -81,6 +92,8 @@ enum Token {
         case .brace: return Type.brace
         case .binaryOperation: return Type.binaryOperation
         case .unaryOperation: return Type.unaryOperation
+        case .equals: return Type.equals
+        case .clear: return Type.clear
         }
     }
     
@@ -116,6 +129,10 @@ enum Token {
             switch token {case .binaryOperation: return true; default: return false}
         case .unaryOperation:
             switch token {case .unaryOperation: return self.associativity == token.associativity; default: return false}
+        case .equals:
+            switch token {case .equals: return true; default: return false}
+        case .clear:
+            switch token {case .clear: return true; default: return false}
         }
     }
 }
@@ -148,6 +165,7 @@ class Solver {
         }
 
         for char in expression.characters {
+            
             if let token = operations[pendingOperationKey] {
                 pendingOperationKey = ""
                 switch token {
@@ -163,6 +181,7 @@ class Solver {
                     break
                 }
             }
+            
             if let token = operations[char.description] {
                 switch token {
                 case .constant:
@@ -187,8 +206,11 @@ class Solver {
                     }
                     tokenizedExpression.append(token)
                 case .binaryOperation:
-                    if token.description == "-" && currentOperand.isEmpty && tokenizedExpression.last?.description != ")" {
-                        tokenizedExpression.append(Token.unaryOperation(Operation.negate))
+                    if token.description == "-"
+                        && currentOperand.isEmpty
+                        && tokenizedExpression.last?.description != ")"
+                        && tokenizedExpression.last?.type != .unaryOperation {
+                            tokenizedExpression.append(Token.unaryOperation(Operation.negate))
                     } else {
                         if let tokenizedOperand = tokenize(currentOperand) {
                             if tokenizedExpression.last?.compare(to: Operation.unaryLeftAssociative) == true {
@@ -206,6 +228,8 @@ class Solver {
                         }
                     }
                     tokenizedExpression.append(token)
+                default:
+                    break
                 }
             } else {
                 switch char.description {
@@ -269,6 +293,8 @@ class Solver {
                     }
                     _ = operatorStack.popLast()
                 }
+            default:
+                break
             }
         }
         while !operatorStack.isEmpty {

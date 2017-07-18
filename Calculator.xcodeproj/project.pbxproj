@@ -59,8 +59,8 @@
 			isa = PBXGroup;
 			children = (
 				205124E81F0A0D0E00DA1C47 /* Main.storyboard */,
-				205124E71F0A0D0E00DA1C47 /* CalculatorBrain.swift */,
 				20A80EAE1F1A9EAF005EEE36 /* Solver.swift */,
+				205124E71F0A0D0E00DA1C47 /* CalculatorBrain.swift */,
 				205124E91F0A0D0E00DA1C47 /* ViewController.swift */,
 				20AC0F601F0A0F0200E977EF /* Supporting Files */,
 			);

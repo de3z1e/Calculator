@@ -9,114 +9,118 @@
 import Foundation
 
 struct CalculatorBrain {
-    private var accumulator: Double? = 0 {
-        willSet {
-            if newValue != nil && resultIsPending {
-                description.append(String(newValue!))
-            }
+
+    private let solver = Solver()
+    
+    var result: String?
+
+    var operationEvaluated = false
+    var unaryOperationEvaluated = false
+    var isPendingOperand = false
+    var accumulator = " "
+    var currentOperand = "0"
+
+    mutating func setOperand(_ operand: String) {
+        if operationEvaluated == true {
+            accumulator = " "
+            operationEvaluated = false
+        }
+        
+        let digit = operand
+        if isPendingOperand {
+            let textCurrentlyInDisplay = currentOperand
+            currentOperand = textCurrentlyInDisplay + (digit == "." && textCurrentlyInDisplay.contains(".") ? "" : digit)
+        } else {
+            currentOperand = (digit == "." ? "0." : digit)
+            isPendingOperand = true
+            result = nil
         }
     }
-    
-    private var resultIsPending: Bool = true
-    var description = String()
-    
-    private enum Operation {
-        case constant(Double)
-        case unaryOperation( (Double) -> Double )
-        case binaryOperation( (Double, Double) -> Double)
-        case equals
-        case clear
-
-    }
-    
-    private var operations: Dictionary<String, Operation> = [
-        "π" : Operation.constant(Double.pi),
-        "e" : Operation.constant(M_E),
-        "√" : Operation.unaryOperation(sqrt),
-        "x²": Operation.unaryOperation( {$0 * $0} ),
-        "sin" : Operation.unaryOperation(sin),
-        "cos" : Operation.unaryOperation(cos),
-        "tan" : Operation.unaryOperation(tan),
-        "±" : Operation.unaryOperation( {-$0} ),
-        "×" : Operation.binaryOperation( {$0 * $1} ),
-        "÷" : Operation.binaryOperation( {$0 / $1} ),
-        "+" : Operation.binaryOperation( {$0 + $1} ),
-        "-" : Operation.binaryOperation( {$0 - $1} ),
-        "=" : Operation.equals,
-        "C" : Operation.clear
-    ]
     
     mutating func performOperation(_ symbol: String) {
         if let operation = operations[symbol] {
             switch operation {
-            case .constant(let value):
-                description.append(symbol)
-                resultIsPending = false
-                accumulator = value
-                resultIsPending = true
-            case .unaryOperation(let function):
-                if accumulator != nil {
-                    switch symbol {
-                    case "x²":
-                        description.append("²")
-                    case "√":
-                        description = "√(\(description))"
-                    default:
-                        break
+            case let .constant(_, description):
+                if operationEvaluated == true {
+                    accumulator = " "
+                    operationEvaluated = false
+                }
+                
+                if currentOperand == "0" {
+                    currentOperand = description
+                } else {
+                    currentOperand.append(description)
+                }
+                isPendingOperand = true
+                result = nil
+            case let .unaryOperation(function, _, associativity, description):
+                isPendingOperand = true
+                if operationEvaluated {
+                    accumulator = " "
+                    currentOperand =  result!
+                    result = nil
+                    operationEvaluated = false
+                }
+                if description == "-" && currentOperand.hasPrefix("-") {
+                    currentOperand.remove(at: currentOperand.startIndex)
+                } else if let operand = Double(currentOperand) {
+                    isPendingOperand = false
+                    if function(operand).remainder(dividingBy: 1) == 0 {
+                        result = String(Int(function(operand))) // potential fatal error: Int.max
+                    } else {
+                        result = String(function(operand))
                     }
-                    resultIsPending = false
-                    accumulator = function(accumulator!)
-                    resultIsPending = true
+                    if associativity == .right {
+                        currentOperand = description + (currentOperand == "0" ? "" : currentOperand)
+                    } else {
+                        currentOperand.append(description)
+                    }
+                    accumulator.append(currentOperand)
+                    operationEvaluated = true
+                    unaryOperationEvaluated = true
                 }
-            case .binaryOperation(let function):
-                if accumulator != nil {
-                    performPendingBinaryOperation()
-                    pendingBinaryOperation = PendingBinaryOperation(function: function, firstOperand: accumulator!)
-                    accumulator = nil
-                    description.append(" \(symbol) ")
+
+            case let .binaryOperation(_, _, _, description):
+                if operationEvaluated {
+                    accumulator = " "
+                    currentOperand = unaryOperationEvaluated ? currentOperand : result!
+                    result = nil
+                    isPendingOperand = true
+                    operationEvaluated = false
+                    unaryOperationEvaluated = false
                 }
+                if isPendingOperand {
+                    accumulator.append(currentOperand)
+                    currentOperand = ""
+                    accumulator.append(" \(description) ")
+                    isPendingOperand = false
+                }
+            case .brace:
+                break
             case .equals:
-                performPendingBinaryOperation()
+                if isPendingOperand {
+                    accumulator.append(currentOperand)
+                    currentOperand = ""
+                    isPendingOperand = false
+                }
+                if let solution = solver.evaluate(accumulator) {
+                    if solution.remainder(dividingBy: 1) == 0 {
+                        result = String(Int(solution)) // potential fatal error: Int.max
+                    } else {
+                        result = String(solution)
+                    }
+                }
+                operationEvaluated = true
             case .clear:
-                accumulator = 0
-                pendingBinaryOperation = nil
-                description = " "
-                resultIsPending = true
+                currentOperand = "0"
+                accumulator = " "
+                isPendingOperand = false
+                operationEvaluated = false
+                unaryOperationEvaluated = false
+                result = nil
             }
         }
     }
-    
-    private var pendingBinaryOperation: PendingBinaryOperation?
-    
-    private mutating func performPendingBinaryOperation() {
-        if pendingBinaryOperation != nil && accumulator != nil {
-            resultIsPending = false
-            accumulator = pendingBinaryOperation!.perform(with: accumulator!)
-            resultIsPending = true
-            pendingBinaryOperation = nil
-        }
-    }
-    
-    private struct PendingBinaryOperation {
-        let function: (Double, Double) -> Double
-        let firstOperand: Double
-        func perform(with secondOperand: Double) -> Double {
-            return function(firstOperand, secondOperand)
-        }
-    }
-    
-    mutating func setOperand(_ operand: Double) {
-        if !resultIsPending {
-            description = " "
-            resultIsPending = true
-        }
-        accumulator = operand
-    }
-    
-    var result: Double? {
-        get {
-            return accumulator
-        }
-    }
-    
 }
+
+    
