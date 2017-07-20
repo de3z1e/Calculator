@@ -14,6 +14,8 @@ class ViewController: UIViewController {
     @IBOutlet var buttons: [UIButton]!
     @IBOutlet weak var operationSequence: UILabel!
 
+    private var brain = CalculatorBrain()
+    
     override func viewDidLoad() {
         display.layer.borderWidth = 0.5
         display.layer.borderColor = UIColor.black.cgColor
@@ -23,30 +25,24 @@ class ViewController: UIViewController {
         })
     }
     
-    private var brain = CalculatorBrain()
+    func updateDisplay() {
+        display.text = brain.pendingOperand
+        operationSequence.text = brain.accumulator
+    }
+    
     
     @IBAction func touchDigit(_ sender: UIButton) {
         if let operand = sender.currentTitle {
             brain.setOperand(operand)
         }
-        display.text = brain.currentOperand
+        updateDisplay()
     }
     
     @IBAction func performOperation(_ sender: UIButton) {
         if let operation = sender.currentTitle {
-            if operation == "C" {
-                display.text = "0"
-            }
             brain.performOperation(operation)
         }
-        if brain.isPendingOperand {
-            display.text = brain.currentOperand
-        } else {
-            operationSequence.text = brain.accumulator
-        }
-        if let result = brain.result {
-            display.text = result
-        }
+        updateDisplay()
     }
 
 }

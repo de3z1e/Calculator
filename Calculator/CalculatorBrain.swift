@@ -11,113 +11,104 @@ import Foundation
 struct CalculatorBrain {
 
     private let solver = Solver()
-    
-    var result: String?
 
-    var operationEvaluated = false
-    var unaryOperationEvaluated = false
     var isPendingOperand = false
+    var isPendingOperator = false
+    var operationPending = false
+    var equalsPressed = false
+    
+    var pendingOperand = "0"
     var accumulator = " "
-    var currentOperand = "0"
+    var textCurrentlyInAccumulator = String()
 
-    mutating func setOperand(_ operand: String) {
-        if operationEvaluated == true {
-            accumulator = " "
-            operationEvaluated = false
-        }
-        
-        let digit = operand
-        if isPendingOperand {
-            let textCurrentlyInDisplay = currentOperand
-            currentOperand = textCurrentlyInDisplay + (digit == "." && textCurrentlyInDisplay.contains(".") ? "" : digit)
+
+    mutating func evaluate(_ expression: String) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 20
+        if let result = solver.evaluate(expression) {
+            let formattedResult = formatter.string(for: result)
+            return formattedResult ?? "Error"
         } else {
-            currentOperand = (digit == "." ? "0." : digit)
+            pendingOperand = "0"
+            accumulator = " "
+            isPendingOperand = false
+            isPendingOperator = false
+            equalsPressed = false
+            textCurrentlyInAccumulator = ""
+            return "Error"
+        }
+    }
+    
+    mutating func setOperand(_ digit: String) {
+        if isPendingOperand {
+            pendingOperand.append(digit == "." && pendingOperand.contains(".") ? "" : digit)
+        } else {
+            if equalsPressed {
+                accumulator = " "
+                equalsPressed = false
+            }
+            pendingOperand = (digit == "." ? "0." : digit)
             isPendingOperand = true
-            result = nil
+            isPendingOperator = false
         }
     }
     
     mutating func performOperation(_ symbol: String) {
         if let operation = operations[symbol] {
             switch operation {
-            case let .constant(_, description):
-                if operationEvaluated == true {
+            case .constant:
+                break
+            case let .unaryOperation(_, _, associativity, description):
+                if equalsPressed {
                     accumulator = " "
-                    operationEvaluated = false
+                    equalsPressed = false
                 }
-                
-                if currentOperand == "0" {
-                    currentOperand = description
-                } else {
-                    currentOperand.append(description)
-                }
-                isPendingOperand = true
-                result = nil
-            case let .unaryOperation(function, _, associativity, description):
-                isPendingOperand = true
-                if operationEvaluated {
-                    accumulator = " "
-                    currentOperand =  result!
-                    result = nil
-                    operationEvaluated = false
-                }
-                if description == "-" && currentOperand.hasPrefix("-") {
-                    currentOperand.remove(at: currentOperand.startIndex)
-                } else if let operand = Double(currentOperand) {
-                    isPendingOperand = false
-                    if function(operand).remainder(dividingBy: 1) == 0 {
-                        result = String(Int(function(operand))) // potential fatal error: Int.max
-                    } else {
-                        result = String(function(operand))
-                    }
-                    if associativity == .right {
-                        currentOperand = description + (currentOperand == "0" ? "" : currentOperand)
-                    } else {
-                        currentOperand.append(description)
-                    }
-                    accumulator.append(currentOperand)
-                    operationEvaluated = true
-                    unaryOperationEvaluated = true
-                }
-
+                let unaryExpression = (associativity == .left ? pendingOperand + description : description + "(\(pendingOperand))")
+                pendingOperand = evaluate(unaryExpression)
+                isPendingOperand = false
+                isPendingOperator = false
             case let .binaryOperation(_, _, _, description):
-                if operationEvaluated {
+                if equalsPressed {
                     accumulator = " "
-                    currentOperand = unaryOperationEvaluated ? currentOperand : result!
-                    result = nil
-                    isPendingOperand = true
-                    operationEvaluated = false
-                    unaryOperationEvaluated = false
+                    equalsPressed = false
                 }
-                if isPendingOperand {
-                    accumulator.append(currentOperand)
-                    currentOperand = ""
-                    accumulator.append(" \(description) ")
+                let pendingOperation = " \(description) "
+                if isPendingOperator {
+                    accumulator = textCurrentlyInAccumulator + pendingOperation
+                } else {
+                    accumulator.append(pendingOperand)
+                    textCurrentlyInAccumulator = accumulator
+                    accumulator.append(pendingOperation)
                     isPendingOperand = false
+                    isPendingOperator = true
+                    operationPending = true
                 }
             case .brace:
                 break
             case .equals:
-                if isPendingOperand {
-                    accumulator.append(currentOperand)
-                    currentOperand = ""
+                guard operationPending else {
+                    break
+                }
+                if !equalsPressed {
+                    accumulator.append(pendingOperand)
                     isPendingOperand = false
-                }
-                if let solution = solver.evaluate(accumulator) {
-                    if solution.remainder(dividingBy: 1) == 0 {
-                        result = String(Int(solution)) // potential fatal error: Int.max
-                    } else {
-                        result = String(solution)
+                    if accumulator != " " {
+                        pendingOperand = evaluate(accumulator)
+                        //textCurrentlyInAccumulator = pendingOperand
+                        isPendingOperator = false
+                        operationPending = false
                     }
+                    equalsPressed = true
                 }
-                operationEvaluated = true
             case .clear:
-                currentOperand = "0"
+                pendingOperand = "0"
                 accumulator = " "
                 isPendingOperand = false
-                operationEvaluated = false
-                unaryOperationEvaluated = false
-                result = nil
+                isPendingOperator = false
+                operationPending = false
+                equalsPressed = false
+                textCurrentlyInAccumulator = ""
             }
         }
     }

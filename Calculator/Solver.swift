@@ -226,6 +226,10 @@ class Solver {
                         if token.associativity == .right {
                             tokenizedExpression.append(Token.binaryOperation(Operation.multiplication))
                         }
+                    } else if tokenizedExpression.last?.compare(to: Operation.unaryLeftAssociative) == true {
+                        if token.associativity == .right {
+                            tokenizedExpression.append(Token.binaryOperation(Operation.multiplication))
+                        }
                     }
                     tokenizedExpression.append(token)
                 default:
@@ -268,6 +272,7 @@ class Solver {
     }
 
     // MARK: - Reverse Polish Notation
+    
     private func reversePolishNotation(_ tokenizedExpression: [Token]) -> [Token] {
         var operatorStack = [Token]()
         var outputStack = [Token]()
@@ -304,6 +309,7 @@ class Solver {
     }
     
     // MARK: - Evaluate Reverse Polish Notation
+    
     private func evaluateReversePolishNotation(_ expression: [Token]) -> Double? {
         var outputQueue = [Double]()
         for token in expression {
