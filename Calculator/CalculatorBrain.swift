@@ -14,8 +14,8 @@ struct CalculatorBrain {
 
     var isPendingOperand = false
     var isPendingOperator = false
-    var operationPending = false
-    var equalsPressed = false
+    var isOperationPending = false
+    var isEqualsPressed = false
     
     var pendingOperand = "0"
     var accumulator = " "
@@ -25,7 +25,7 @@ struct CalculatorBrain {
     mutating func evaluate(_ expression: String) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 20
+        formatter.maximumFractionDigits = 14
         if let result = solver.evaluate(expression) {
             let formattedResult = formatter.string(for: result)
             return formattedResult ?? "Error"
@@ -34,7 +34,8 @@ struct CalculatorBrain {
             accumulator = " "
             isPendingOperand = false
             isPendingOperator = false
-            equalsPressed = false
+            isOperationPending = false
+            isEqualsPressed = false
             textCurrentlyInAccumulator = ""
             return "Error"
         }
@@ -44,9 +45,9 @@ struct CalculatorBrain {
         if isPendingOperand {
             pendingOperand.append(digit == "." && pendingOperand.contains(".") ? "" : digit)
         } else {
-            if equalsPressed {
+            if isEqualsPressed {
                 accumulator = " "
-                equalsPressed = false
+                isEqualsPressed = false
             }
             pendingOperand = (digit == "." ? "0." : digit)
             isPendingOperand = true
@@ -57,21 +58,28 @@ struct CalculatorBrain {
     mutating func performOperation(_ symbol: String) {
         if let operation = operations[symbol] {
             switch operation {
-            case .constant:
+            case let .constant(_ , description):
+                if isEqualsPressed {
+                    accumulator = " "
+                    isEqualsPressed = false
+                }
+                pendingOperand = evaluate(description)
+                isPendingOperand = false
+                isPendingOperator = false
                 break
             case let .unaryOperation(_, _, associativity, description):
-                if equalsPressed {
+                if isEqualsPressed {
                     accumulator = " "
-                    equalsPressed = false
+                    isEqualsPressed = false
                 }
                 let unaryExpression = (associativity == .left ? pendingOperand + description : description + "(\(pendingOperand))")
                 pendingOperand = evaluate(unaryExpression)
                 isPendingOperand = false
                 isPendingOperator = false
             case let .binaryOperation(_, _, _, description):
-                if equalsPressed {
+                if isEqualsPressed {
                     accumulator = " "
-                    equalsPressed = false
+                    isEqualsPressed = false
                 }
                 let pendingOperation = " \(description) "
                 if isPendingOperator {
@@ -82,32 +90,32 @@ struct CalculatorBrain {
                     accumulator.append(pendingOperation)
                     isPendingOperand = false
                     isPendingOperator = true
-                    operationPending = true
+                    isOperationPending = true
                 }
             case .brace:
                 break
             case .equals:
-                guard operationPending else {
+                guard isOperationPending else {
                     break
                 }
-                if !equalsPressed {
+                if !isEqualsPressed {
                     accumulator.append(pendingOperand)
                     isPendingOperand = false
                     if accumulator != " " {
                         pendingOperand = evaluate(accumulator)
                         //textCurrentlyInAccumulator = pendingOperand
                         isPendingOperator = false
-                        operationPending = false
+                        isOperationPending = false
                     }
-                    equalsPressed = true
+                    isEqualsPressed = true
                 }
             case .clear:
                 pendingOperand = "0"
                 accumulator = " "
                 isPendingOperand = false
                 isPendingOperator = false
-                operationPending = false
-                equalsPressed = false
+                isOperationPending = false
+                isEqualsPressed = false
                 textCurrentlyInAccumulator = ""
             }
         }
