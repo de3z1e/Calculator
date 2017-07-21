@@ -15,7 +15,7 @@ enum Associativity {
     case left
     case right
 }
-
+ 
 struct Operation {
     static let unaryLeftAssociative = Token.unaryOperation( ({$0}, 0, .left, "") )
     static let unaryRightAssociative = Token.unaryOperation( ({$0}, 0, .right, "") )
