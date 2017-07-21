@@ -35,6 +35,7 @@ struct Operation {
 var operations: Dictionary<String, Token> = [
     "=" : Token.equals("="),
     "C" : Token.clear("C"),
+    "AC" : Token.clear("AC"),
     "π" : Token.constant( (Double.pi, "π") ),
     "e" : Token.constant( (M_E, "e") ),
     "(" : Token.brace("("),
